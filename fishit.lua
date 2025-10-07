@@ -150,7 +150,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if busyCatch then return end
 
     busyCatch = true
-    task.wait(1.1)
+    task.wait(2)
     pcall(function() REFishingCompleted:FireServer() end)
 
     task.delay(COOLDOWN_CATCH, function() busyCatch = false end)
