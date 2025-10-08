@@ -6,7 +6,6 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -20,6 +19,7 @@ local RFChargeFishingRod    = Net:WaitForChild("RF/ChargeFishingRod")
 local RFStartMinigame       = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 local REReplicateTextEffect = Net:WaitForChild("RE/ReplicateTextEffect")
 local REFishingCompleted    = Net:WaitForChild("RE/FishingCompleted")
+local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 
 --== Config ==--
 local COOLDOWN_CATCH = 0.25
