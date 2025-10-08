@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -164,6 +165,22 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     end)
 end)
 
+local WEATHER_DEBOUNCE = 0.5
+local lastWeatherAt = 0
+
+local function purchaseWeather(kind)
+    local now = os.clock()
+    if now - lastWeatherAt < WEATHER_DEBOUNCE then return end
+    lastWeatherAt = now
+
+    local ok, res = safeInvoke(RFPurchaseWeatherEvent, kind)
+    if not ok then
+        warn(("[Weather] purchase '%s' gagal"):format(tostring(kind)))
+        return false
+    end
+    return true
+end
+
 --== UI BUILD ==--
 local function buildUI()
     local screen = Instance.new("ScreenGui")
@@ -249,6 +266,7 @@ local function buildUI()
 
     local tabAutomation = makeTabButton("Automation")
     local tabTeleport   = makeTabButton("Teleport")
+    local tabWeather    = makeTabButton("Weather")
 
     -- Pages container
     local pages = Instance.new("Frame")
@@ -393,16 +411,68 @@ local function buildUI()
         makeTpButton(item[1], item[2])
     end
 
+    -- Page: Weather
+    local pgWeather = makePage()
+    
+    local weatherList = Instance.new("UIListLayout", pgWeather)
+    weatherList.SortOrder = Enum.SortOrder.LayoutOrder
+    weatherList.Padding = UDim.new(0, 10)
+    
+    local wInfo = Instance.new("TextLabel")
+    wInfo.BackgroundTransparency = 1
+    wInfo.Text = "Purchase Weather"
+    wInfo.TextColor3 = Color3.fromRGB(220,220,220)
+    wInfo.Font = Enum.Font.GothamMedium
+    wInfo.TextScaled = true
+    wInfo.Size = UDim2.fromScale(1, 0.16)
+    wInfo.Parent = pgWeather
+    
+    local function makeWeatherButton(label, kind)
+        local b = Instance.new("TextButton")
+        b.Text = label
+        b.TextScaled = true
+        b.Font = Enum.Font.GothamBold
+        b.TextColor3 = Color3.fromRGB(255,255,255)
+        b.BackgroundColor3 = Color3.fromRGB(55,55,55)
+        b.Size = UDim2.fromScale(1, 0.18)
+        b.Parent = pgWeather
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    
+        b.MouseButton1Click:Connect(function()
+            local ok = purchaseWeather(kind)
+            if ok then
+                wInfo.Text = ("Purchased: %s"):format(label)
+                wInfo.TextColor3 = Color3.fromRGB(120,255,120)
+                task.delay(1.2, function()
+                    if pgWeather.Visible then
+                        wInfo.Text = "Purchase Weather"
+                        wInfo.TextColor3 = Color3.fromRGB(220,220,220)
+                    end
+                end)
+            else
+                wInfo.Text = ("Failed: %s"):format(label)
+                wInfo.TextColor3 = Color3.fromRGB(255,90,90)
+            end
+        end)
+    end
+    
+    makeWeatherButton("Storm",  "Storm")
+    makeWeatherButton("Cloudy", "Cloudy")
+    makeWeatherButton("Wind",   "Wind")
+
     -- Tab switching
     local function showPage(which)
-        pgAuto.Visible = (which == "auto")
-        pgTp.Visible   = (which == "tp")
-
-        tabAutomation.BackgroundColor3 = (which=="auto") and Color3.fromRGB(70,70,120) or Color3.fromRGB(40,40,40)
-        tabTeleport.BackgroundColor3   = (which=="tp")   and Color3.fromRGB(70,70,120) or Color3.fromRGB(40,40,40)
+        pgAuto.Visible    = (which == "auto")
+        pgTp.Visible      = (which == "tp")
+        pgWeather.Visible = (which == "weather")
+    
+        tabAutomation.BackgroundColor3 = (which=="auto")    and Color3.fromRGB(70,70,120) or Color3.fromRGB(40,40,40)
+        tabTeleport.BackgroundColor3   = (which=="tp")      and Color3.fromRGB(70,70,120) or Color3.fromRGB(40,40,40)
+        tabWeather.BackgroundColor3    = (which=="weather") and Color3.fromRGB(70,70,120) or Color3.fromRGB(40,40,40)
     end
     tabAutomation.MouseButton1Click:Connect(function() showPage("auto") end)
     tabTeleport.MouseButton1Click:Connect(function() showPage("tp") end)
+    tabWeather.MouseButton1Click:Connect(function() showPage("weather") end)
     showPage("auto")
 
     -- Minimize → bubble
