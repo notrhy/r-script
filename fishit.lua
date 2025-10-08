@@ -27,7 +27,6 @@ local MAX_RETRY_RF   = 2
 
 -- Power buckets (multi-select)
 local POWER_OPTIONS = {
-    {key="OK",       min=0.10, max=0.20},
     {key="GOOD",     min=0.50, max=0.50},
     {key="GREAT",    min=0.60, max=0.70},
     {key="AMAZING",  min=0.80, max=0.80},
@@ -40,9 +39,15 @@ local MODE_DIR = "fixed"  -- "fixed" | "look"
 
 -- Contoh daftar teleport (isi sendiri posisimu)
 local TELEPORTS = {
-    {"Dock",      CFrame.new(0, 5,   0)},
-    {"Market",    CFrame.new(50,5, -20)},
-    {"Cliff",     CFrame.new(-60,15,40)},
+    {"Esoteric Island",      CFrame.new(2026, 27.40,   1390)},
+    {"Iceland",    CFrame.new(1604, 4.29, 3276)},
+    {"Creater Island",     CFrame.new(962, 7.4, 4872)},
+    {"Esoteric Depths",     CFrame.new(2979, -1302, 1519)},
+    {"Kohana",     CFrame.new(-684, 3.1, 796)},
+    {"Kohana Volcano",     CFrame.new(-584, 49.2, 215)},
+    {"Weather Machine",     CFrame.new(-1510, 6.5, 1894)},
+    {"Coral Reefs",     CFrame.new(-2775, 4.1, 2150)},
+    {"Tropical Grove",     CFrame.new(-2041, 6.3, 3663)},
 }
 
 --== State ==--
