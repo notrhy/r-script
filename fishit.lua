@@ -49,6 +49,7 @@ local TELEPORTS = {
     {"Weather Machine",     CFrame.new(-1510, 6.5, 1894)},
     {"Coral Reefs",     CFrame.new(-2775, 4.1, 2150)},
     {"Tropical Grove",     CFrame.new(-2041, 6.3, 3663)},
+    {"Sacred Temple", CFrame.new(1487, 7.9, -533)},
 }
 
 --== State ==--
