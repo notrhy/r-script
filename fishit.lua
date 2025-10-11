@@ -23,7 +23,7 @@ local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 
 --== Config ==--
 local COOLDOWN_CATCH = 0.25
-local RECHARGE_DELAY = 1.00
+local RECHARGE_DELAY = 0.5
 local MAX_RETRY_RF   = 2
 
 -- Power buckets (multi-select)
@@ -157,7 +157,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if busyCatch then return end
 
     busyCatch = true
-    task.wait(1.2)
+    task.wait(1.05)
     pcall(function() REFishingCompleted:FireServer() end)
 
     task.delay(COOLDOWN_CATCH, function() busyCatch = false end)
