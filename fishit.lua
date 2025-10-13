@@ -231,7 +231,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     _reelActive = true
     playLoop(ANIM_IDS.Reel)
 
-    task.wait(1.8)
+    task.wait(1.1)
 
     pcall(function() REFishingCompleted:FireServer() end)
 
