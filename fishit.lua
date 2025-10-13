@@ -68,7 +68,6 @@ local function safeInvoke(rf, ...)
             return rf:InvokeServer(table.unpack(args))
         end)
         if ok then return true, res end
-        task.wait(0.2)
     end
     return false, nil
 end
@@ -230,7 +229,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     _reelActive = true
     playLoop(ANIM_IDS.Reel)
 
-    task.wait(1.1)
+    task.wait(1.2)
 
     pcall(function() REFishingCompleted:FireServer() end)
 
