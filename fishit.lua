@@ -195,7 +195,6 @@ local function charge()
     stopAll()
 
 	playOnce(ANIM_IDS.Cast)
-    task.wait(0.5)
     local ok1 = select(1, safeInvoke(RFChargeFishingRod, workspace:GetServerTimeNow()))
     if not ok1 then
         _isCasting = false
