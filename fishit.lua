@@ -20,13 +20,12 @@ local RFStartMinigame       = Net:WaitForChild("RF/RequestFishingMinigameStarted
 local REReplicateTextEffect = Net:WaitForChild("RE/ReplicateTextEffect")
 local REFishingCompleted    = Net:WaitForChild("RE/FishingCompleted")
 local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
+local REFishCaught = Net:WaitForChild("RE/FishCaught")
 
---== Config ==--
 local COOLDOWN_CATCH = 0.25
 local RECHARGE_DELAY = 0.5
 local MAX_RETRY_RF   = 2
 
--- Power buckets (multi-select)
 local POWER_OPTIONS = {
     {key="GOOD",     min=0.50, max=0.50},
     {key="GREAT",    min=0.60, max=0.70},
@@ -34,11 +33,9 @@ local POWER_OPTIONS = {
     {key="PERFECT",  min=0.96, max=0.99},
 }
 
--- Fixed-X mode (sesuai permintaanmu)
 local FIXED_X_VALUE = -0.5718746185302734
-local MODE_DIR = "fixed"  -- "fixed" | "look"
+local MODE_DIR = "fixed"
 
--- Contoh daftar teleport (isi sendiri posisimu)
 local TELEPORTS = {
     {"Esoteric Island",      CFrame.new(2026, 27.40,   1390)},
     {"Iceland",    CFrame.new(1604, 4.29, 3276)},
@@ -52,36 +49,32 @@ local TELEPORTS = {
     {"Sacred Temple", CFrame.new(1487, 7.9, -533)},
 }
 
---== State ==--
-local running   = false
-local busyCatch = false
-local lastCastAt = -math.huge
+local running     = false
+local busyCatch   = false
+local lastCastAt  = -math.huge
 
--- Multi-select storage -> set of keys
-local selectedKeys = { PERFECT = true }  -- default pilih PERFECT
+local selectedKeys = { PERFECT = true }
 
---== Helpers ==--
 local function safeInvoke(rf, ...)
     local args = { ... }
+    local delay = 0.08
     for _ = 1, MAX_RETRY_RF do
         local ok, res = pcall(function()
             return rf:InvokeServer(table.unpack(args))
         end)
         if ok then return true, res end
+        task.wait(delay)
+        delay = math.min(delay * 2, 0.5)
     end
     return false, nil
 end
 
 local function choosePower()
-    -- Ambil daftar opsi yang currently selected
     local pool = {}
     for _, opt in ipairs(POWER_OPTIONS) do
-        if selectedKeys[opt.key] then
-            table.insert(pool, opt)
-        end
+        if selectedKeys[opt.key] then table.insert(pool, opt) end
     end
     if #pool == 0 then
-        -- fallback: PERFECT
         for _, opt in ipairs(POWER_OPTIONS) do
             if opt.key == "PERFECT" then return opt end
         end
@@ -90,7 +83,7 @@ local function choosePower()
     return pool[math.random(1, #pool)]
 end
 
-local function clamp01(v)
+local function clampUnit(v)
     if v > 1 then return 1 elseif v < -1 then return -1 else return v end
 end
 
@@ -100,23 +93,26 @@ local function randBetween(a, b)
 end
 
 local function getDirXZ()
-    -- Pilih 1 power secara acak dari multi-select
     local opt = choosePower()
     local m = randBetween(opt.min, opt.max)
 
     if MODE_DIR == "fixed" then
-        return clamp01(FIXED_X_VALUE), clamp01(m)
+        return clampUnit(FIXED_X_VALUE), clampUnit(m)
     end
 
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
+    local char = LocalPlayer.Character
+    if not char then return clampUnit(FIXED_X_VALUE), clampUnit(m) end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return clampUnit(FIXED_X_VALUE), clampUnit(m) end
+
     local v = root.CFrame.LookVector
-    local mag = math.sqrt(v.X*v.X + v.Z*v.Z)
+    local mag = math.sqrt(v.X * v.X + v.Z * v.Z)
     if mag < 1e-6 then
-        return clamp01(FIXED_X_VALUE), clamp01(m)
+        return clampUnit(FIXED_X_VALUE), clampUnit(m)
     end
-    local ux, uz = v.X/mag, v.Z/mag
-    return clamp01(ux * m), clamp01(uz * m)
+    local ux, uz = v.X / mag, v.Z / mag
+    return clampUnit(ux * m), clampUnit(uz * m)
 end
 
 local function isMyExclaim(payload)
@@ -126,132 +122,101 @@ local function isMyExclaim(payload)
     if effect ~= "Exclaim" then return false end
 
     local inst = (td and (td.AttachTo or td.Adornee))
-              or payload.Container
-              or payload.AttachTo
-
+        or payload.Container
+        or payload.AttachTo
     if typeof(inst) ~= "Instance" then return false end
 
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    if inst:IsDescendantOf(char) then return true end
+    local char = LocalPlayer.Character
+    if char and inst:IsDescendantOf(char) then return true end
 
-    local owner = inst:FindFirstAncestorOfClass("Model")
-    return owner and Players:GetPlayerFromCharacter(owner) == LocalPlayer
+    local ownerModel = inst:FindFirstAncestorOfClass("Model")
+    local ownerPlr = ownerModel and Players:GetPlayerFromCharacter(ownerModel)
+    return ownerPlr == LocalPlayer
 end
 
--- ==== ANIMATION CONFIG ====
-local ANIM_IDS = {
-    Cast   = "rbxassetid://92624107165273",
-    Wait   = "rbxassetid://134965425664034",
-    Reel   = "rbxassetid://114959536562596",
-}
-
-local _tracks = {}
-local function getAnimator()
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hum  = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid")
-    local ani  = hum:FindFirstChildOfClass("Animator")
-    if not ani then ani = Instance.new("Animator"); ani.Parent = hum end
-    return ani
+local function canRecharge()
+    return (workspace:GetServerTimeNow() - lastCastAt) >= COOLDOWN_CATCH
 end
-
-local function ensureTrack(id)
-    if not id or id == "" then return nil end
-    local t = _tracks[id]
-    if t and t.IsPlaying ~= nil then return t end
-    local animator = getAnimator()
-    local a = Instance.new("Animation"); a.AnimationId = id
-    t = animator:LoadAnimation(a); _tracks[id] = t
-    return t
-end
-
-local function playOnce(id, fade)
-    local t = ensureTrack(id); if not t then return nil end
-    t.Looped = false; t:Play(fade or 0.12); return t
-end
-
-local function playLoop(id, fade)
-    local t = ensureTrack(id); if not t then return nil end
-    t.Looped = true;  t:Play(fade or 0.12); return t
-end
-
-local function stop(id, fade)
-    local t = _tracks[id]; if t and t.IsPlaying then t:Stop(fade or 0.12) end
-end
-
-local function stopAll()
-    for id,t in pairs(_tracks) do pcall(function() if t.IsPlaying then t:Stop(0.1) end end) end
-end
-
-local _isCasting = false
-local _waitActive = false
-local _reelActive = false
 
 local function charge()
-    if not running or _isCasting then return end
-    _isCasting = true
-    _waitActive = false
-    _reelActive = false
-    stopAll()
+    if not running then return end
+    if not canRecharge() then return end
 
-	playOnce(ANIM_IDS.Cast)
     local ok1 = select(1, safeInvoke(RFChargeFishingRod, workspace:GetServerTimeNow()))
-    if not ok1 then
-        _isCasting = false
-        return
-    end
-
-	task.delay(0.1, function()
-		if _isCasting and running then
-			stop(ANIM_IDS.Cast)
-			_waitActive = true
-			playLoop(ANIM_IDS.Wait)
-		end
-	end)
+    if not ok1 then return end
 
     local x, z = getDirXZ()
     local ok2 = select(1, safeInvoke(RFStartMinigame, x, z))
-
     if ok2 then
         lastCastAt = workspace:GetServerTimeNow()
-    else
-        _isCasting = false
     end
+end
+
+local function waitForAnyFishCaught(timeout)
+    timeout = timeout or 1.0
+    local got = false
+    local conn
+    conn = REFishCaught.OnClientEvent:Connect(function(name, data)
+        got = true
+    end)
+
+    local t0 = workspace:GetServerTimeNow()
+    while not got and (workspace:GetServerTimeNow() - t0) < timeout do
+        task.wait(0.01)
+    end
+
+    if conn then conn:Disconnect() end
+    return got
+end
+
+local function tryFinishHeuristic(maxAttempts, waitTimeout)
+    maxAttempts = maxAttempts or 2
+    waitTimeout = waitTimeout or 1.0
+    local backoff = 0.08
+
+    for attempt = 1, maxAttempts do
+        local okFire, err = pcall(function()
+            REFishingCompleted:FireServer()
+        end)
+        if not okFire then
+            warn("REFishingCompleted FireServer error:", err)
+            return false
+        end
+
+        if waitForAnyFishCaught(waitTimeout) then
+            return true
+        end
+
+        if attempt < maxAttempts then
+            task.wait(backoff)
+            backoff = math.min(backoff * 2, 0.5)
+        end
+    end
+
+    return false
 end
 
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running then return end
-    if not isMyExclaim(payload) then return end
     if busyCatch then return end
+    if not isMyExclaim(payload) then return end
 
     busyCatch = true
-    _waitActive = false
-    stop(ANIM_IDS.Wait)
-    _reelActive = true
-    playLoop(ANIM_IDS.Reel)
 
-    task.wait(1.2)
+    task.wait(0.5)
+    local ok = tryFinishHeuristic(2, 1.0)
+    if not ok then
+        warn("[Fishing] REFishCaught tidak diterima dalam window.")
+    end
 
-    pcall(function() REFishingCompleted:FireServer() end)
+    task.delay(COOLDOWN_CATCH, function()
+        busyCatch = false
+    end)
 
-    _reelActive = false
-    stop(ANIM_IDS.Reel)
-
-    _isCasting = false
-
-    task.delay(COOLDOWN_CATCH, function() busyCatch = false end)
     task.delay(RECHARGE_DELAY, function()
         if running then charge() end
     end)
 end)
-
-local function onAutoOff()
-    running = false
-    _isCasting = false
-    _waitActive = false
-    _reelActive = false
-    busyCatch = false
-    stopAll()
-end
 
 local WEATHER_DEBOUNCE = 0.5
 local lastWeatherAt = 0
@@ -460,8 +425,6 @@ local function buildUI()
         refreshOptButtons()
         if running then 
 			charge()
-		else
-			onAutoOff()
 		end
     end)
 
