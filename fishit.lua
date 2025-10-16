@@ -22,8 +22,8 @@ local REFishingCompleted    = Net:WaitForChild("RE/FishingCompleted")
 local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 local REFishCaught = Net:WaitForChild("RE/FishCaught")
 
-local COOLDOWN_CATCH = 0.25
-local RECHARGE_DELAY = 0.5
+local COOLDOWN_CATCH = 0.1
+local RECHARGE_DELAY = 0.2
 local MAX_RETRY_RF   = 2
 
 local POWER_OPTIONS = {
@@ -170,7 +170,7 @@ local function waitForAnyFishCaught(timeout)
 end
 
 local function tryFinishHeuristic(maxAttempts, waitTimeout)
-    maxAttempts = maxAttempts or 2
+    maxAttempts = maxAttempts or 5
     waitTimeout = waitTimeout or 1.0
     local backoff = 0.08
 
@@ -203,7 +203,6 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
 
     busyCatch = true
 
-    task.wait(0.5)
     local ok = tryFinishHeuristic(2, 1.0)
     if not ok then
         warn("[Fishing] REFishCaught tidak diterima dalam window.")
