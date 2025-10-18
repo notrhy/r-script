@@ -22,8 +22,8 @@ local REFishingCompleted    = Net:WaitForChild("RE/FishingCompleted")
 local RFPurchaseWeatherEvent = Net:WaitForChild("RF/PurchaseWeatherEvent")
 local REFishCaught = Net:WaitForChild("RE/FishCaught")
 
-local COOLDOWN_CATCH = 0.1
-local RECHARGE_DELAY = 0.2
+local COOLDOWN_CATCH = 0.05
+local RECHARGE_DELAY = 0.1
 local MAX_RETRY_RF   = 2
 
 local POWER_OPTIONS = {
@@ -153,7 +153,7 @@ local function charge()
 end
 
 local function waitForAnyFishCaught(timeout)
-    timeout = timeout or 1.0
+    timeout = timeout or 2.0
     local got = false
     local conn
     conn = REFishCaught.OnClientEvent:Connect(function(name, data)
