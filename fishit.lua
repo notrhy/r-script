@@ -176,8 +176,8 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
 
 		repeat
 			REFishingCompleted:FireServer()
-			task.wait(0.1)
-			timer += 0.1
+			task.wait(1.0)
+			timer += 1.0
 		until gotFish or not running or timer >= timeout
 
 		if timer >= timeout and running then
