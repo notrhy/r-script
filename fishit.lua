@@ -154,7 +154,7 @@ REFishCaught.OnClientEvent:Connect(function(payload)
 	print("[Fishing] 🎣 Fish caught:", payload)
 
 	-- Delay 0.1 detik sebelum charge ulang
-	task.delay(0.05, function()
+	task.delay(0.5, function()
 		if running then
 			print("[Fishing] ♻️ Restarting charge after catch...")
 			charge()
