@@ -172,13 +172,6 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
 			task.wait(1.8)
 			timer += 1.0
 		until gotFish or not running or timer >= timeout
-
-		gotFish = false
-
-		if timer >= timeout and running then
-			warn("[Fishing] ⏰ Timeout — restarting charge...")
-			charge()
-		end
 	end)
 end)
 
@@ -415,10 +408,6 @@ local function buildUI()
     toggle.MouseButton1Click:Connect(function()
         running = not running
         refreshOptButtons()
-        if running then 
-			task.spawn(main)
-            task.spawn(spamFinish)
-		end
     end)
 
     -- Page: Teleport
