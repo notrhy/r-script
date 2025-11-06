@@ -153,13 +153,6 @@ REFishCaught.OnClientEvent:Connect(function(payload)
 	gotFish = true
 	print("[Fishing] 🎣 Fish caught:", payload)
 
-	-- Delay 0.1 detik sebelum charge ulang
-	task.delay(0.5, function()
-		if running then
-			print("[Fishing] ♻️ Restarting charge after catch...")
-			charge()
-		end
-	end)
 end)
 
 
@@ -171,14 +164,16 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
 	print("[Fishing] 🐟 Starting fishing minigame...")
 
 	task.spawn(function()
-		local timeout = 3 -- detik maksimal nunggu
+		local timeout = 5 -- detik maksimal nunggu
 		local timer = 0
 
 		repeat
 			REFishingCompleted:FireServer()
-			task.wait(1.0)
+			task.wait(1.8)
 			timer += 1.0
 		until gotFish or not running or timer >= timeout
+
+		gotFish = false
 
 		if timer >= timeout and running then
 			warn("[Fishing] ⏰ Timeout — restarting charge...")
