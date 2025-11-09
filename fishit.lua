@@ -22,7 +22,7 @@ local RFCancelFishingInputs = Net:WaitForChild("RF/CancelFishingInputs")
 local running = false
 local minigameStarted = false
 local MAX_RETRY_RF = 2
-local RECHARGE_DELAY = 1.01
+local RECHARGE_DELAY = 1.1
 
 local function safeInvoke(rf, ...)
     local args = { ... }
@@ -127,7 +127,7 @@ end
 
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running or not isMyExclaim(payload) then return end
-    task.wait(0.95)
+    task.wait(0.85)
     REFishingCompleted:FireServer()
 
     task.delay(RECHARGE_DELAY, function()
@@ -173,7 +173,7 @@ local function createResetButton()
 	local container = Instance.new("Frame")
 	container.BackgroundTransparency = 1
 	container.AnchorPoint = Vector2.new(0.5, 0)
-	container.Position = UDim2.new(0.120, -60, 0.050, 0)
+	container.Position = UDim2.new(0.115, -60, 0.050, 0)
 	container.Size = UDim2.new(0, 120, 0, 100)
 	container.Parent = screen
 
