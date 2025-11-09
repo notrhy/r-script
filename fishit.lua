@@ -127,7 +127,7 @@ end
 
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running or not isMyExclaim(payload) then return end
-    task.wait(0.75)
+    task.wait(0.85)
     REFishingCompleted:FireServer()
 
     task.delay(RECHARGE_DELAY, function()
