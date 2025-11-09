@@ -22,7 +22,7 @@ local RFCancelFishingInputs = Net:WaitForChild("RF/CancelFishingInputs")
 local running = false
 local minigameStarted = false
 local MAX_RETRY_RF = 2
-local RECHARGE_DELAY = 1.1
+local RECHARGE_DELAY = 1.2
 
 local function safeInvoke(rf, ...)
     local args = { ... }
@@ -127,7 +127,7 @@ end
 
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running or not isMyExclaim(payload) then return end
-    task.wait(0.95)
+    task.wait(1.01)
     REFishingCompleted:FireServer()
 
     task.delay(RECHARGE_DELAY, function()
