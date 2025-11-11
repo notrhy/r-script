@@ -224,6 +224,32 @@ local function createResetButton()
 	resetButton.Text = "Reset Character"
 	resetButton.Parent = container
 	resetButton.MouseButton1Click:Connect(resetCharacter)
+
+	-- Delay Input
+local delayBox = Instance.new("TextBox")
+delayBox.Size = UDim2.new(1, 0, 0, 40)
+delayBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+delayBox.TextColor3 = Color3.new(1, 1, 1)
+delayBox.Font = Enum.Font.GothamBold
+delayBox.TextSize = 16
+delayBox.PlaceholderText = "Delay Complete (sec)"
+delayBox.Text = tostring(delayComplete)
+delayBox.Parent = container
+
+delayBox.FocusLost:Connect(function(enter)
+    local v = tonumber(delayBox.Text)
+
+    if not v then
+        delayBox.Text = tostring(delayComplete)
+        return
+    end
+
+    -- optional safety
+    if v < 0 then v = 0 end
+    if v > 5 then v = 5 end
+
+    delayComplete = v
+end)
 end
 
 createResetButton()
