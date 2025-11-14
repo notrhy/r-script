@@ -24,6 +24,7 @@ local minigameStarted = false
 local delayComplete = 0.8
 local MAX_RETRY_RF = 2
 local RECHARGE_DELAY = 1.2
+local isClicking = false
 
 local function safeInvoke(rf, ...)
     local args = { ... }
@@ -40,12 +41,14 @@ local function safeInvoke(rf, ...)
 end
 
 local function click(duration)
+	if isClicking then return end
 	local seconds = (duration or 300) / 1000
 	local viewport = workspace.CurrentCamera.ViewportSize
 	local x, y = viewport.X * 0.1, viewport.Y * 0.9
 
 	local timeout = 1.2
 	local retryDelay = 0.25
+	isClicking = true
 
 	repeat
 		minigameStarted = false
@@ -57,6 +60,7 @@ local function click(duration)
 		local start = tick()
 		while tick() - start < timeout do
 			if minigameStarted then
+				isClicking = false
 				return
 			end
 			task.wait(0.05)
