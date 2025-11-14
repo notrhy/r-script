@@ -136,7 +136,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     REFishingCompleted:FireServer()
 
     task.delay(RECHARGE_DELAY, function()
-        if running then cancelFishing() click() end
+        if running then click() end
     end)
 end)
 
