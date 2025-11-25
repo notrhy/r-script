@@ -21,6 +21,7 @@ local RFCancelFishingInputs = Net:WaitForChild("RF/CancelFishingInputs")
 
 local running = false
 local minigameStarted = false
+local waitingForCancel = false
 local delayComplete = 0.8
 local MAX_RETRY_RF = 2
 local RECHARGE_DELAY = 1.2
@@ -100,6 +101,40 @@ local function isMyExclaim(payload)
     return ownerPlr == LocalPlayer
 end
 
+local badcolor = {
+    Color3.fromRGB(195, 255, 85),
+    Color3.fromRGB(85, 162, 255),
+}
+
+local function colorClose(a, b, tol)
+    tol = tol or 0.01
+    return 
+        math.abs(a.R - b.R) < tol and
+        math.abs(a.G - b.G) < tol and
+        math.abs(a.B - b.B) < tol
+end
+
+local function isBadColor(c)
+    for _, bad in ipairs(badcolor) do
+        if colorClose(c, bad, 0.02) then
+            return true
+        end
+    end
+    return false
+end
+
+local function sequenceIsBad(seq)
+    if typeof(seq) ~= "ColorSequence" then return false end
+
+    for _, kp in ipairs(seq.Keypoints) do
+        if isBadColor(kp.Value) then
+            return true
+        end
+    end
+
+    return false
+end
+
 LocalPlayer.Idled:Connect(function()
 	print("🕒 Player idle, mengirim input virtual...")
 	vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
@@ -132,6 +167,27 @@ end
 
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running or not isMyExclaim(payload) then return end
+
+    local colorSeq = payload.TextData and payload.TextData.TextColor
+
+    if sequenceIsBad(colorSeq) then
+        print("jelek, nunggu cancel")
+
+        waitingForCancel = true
+
+        task.spawn(function()
+            while waitingForCancel do
+                task.wait()
+            end
+
+            task.delay(RECHARGE_DELAY, function()
+                if running then cancelFishing() click() end
+            end)
+        end)
+
+        return
+    end
+
     task.wait(delayComplete)
     REFishingCompleted:FireServer()
 
@@ -162,6 +218,10 @@ meta_t.__namecall = function(self, ...)
 
 	if self == RFStartMinigame and method == "InvokeServer" then
 		minigameStarted = true
+    elseif self == RFCancelFishingInputs and method == "InvokeServer" then
+        if waitingForCancel then
+            waitingForCancel = false
+        end
 	end
 
 	return oldNamecall(self, ...)
