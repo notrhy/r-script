@@ -168,26 +168,6 @@ end
 REReplicateTextEffect.OnClientEvent:Connect(function(payload)
     if not running or not isMyExclaim(payload) then return end
 
-    local colorSeq = payload.TextData and payload.TextData.TextColor
-
-    if sequenceIsBad(colorSeq) then
-        print("jelek, nunggu cancel")
-
-        waitingForCancel = true
-
-        task.spawn(function()
-            while waitingForCancel do
-                task.wait()
-            end
-
-            task.delay(RECHARGE_DELAY, function()
-                if running then cancelFishing() click() end
-            end)
-        end)
-
-        return
-    end
-
     task.wait(delayComplete)
     REFishingCompleted:FireServer()
 
