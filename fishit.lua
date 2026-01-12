@@ -24,7 +24,7 @@ local minigameStarted = false
 local waitingForCancel = false
 local delayComplete = 0.8
 local MAX_RETRY_RF = 2
-local RECHARGE_DELAY = 1.05
+local RECHARGE_DELAY = 0.8
 local isClicking = false
 
 local function safeInvoke(rf, ...)
